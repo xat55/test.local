@@ -9,19 +9,20 @@ require "vendor/autoload.php";
 require "data_base.php";
 
 /**
-* 
+* class Employee без возможности наследовать от него
 */
 final class Employee
 {  
-  // private $getDataWorkerAndCabinetTables;
   public $param = null;
   
   public function __construct()
   {
     // $this->create(); 
-    $this->fill(); 
+    // $this->fill(); 
   }
   
+  // Магический метод, обрабатывающий обращения к несуществующим свойствам объекта класса
+  // и вызывающий на исполнение приватные методы класса
   public function __get($property)
   {
     if ($property === 'dataWorkerAndCabinetTables') {
@@ -43,7 +44,7 @@ final class Employee
     return $this->$property;
   }
   
-  public function getDataWorkerAndCabinetTables()
+  private function getDataWorkerAndCabinetTables()
   {
     $query = "SELECT w.id AS id, w.name, w.tel, w.salary, w.address,  c.num, c.floor, c.capacity
     FROM worker AS w 
@@ -55,7 +56,7 @@ final class Employee
     return $query;
   }
   
-  public function getWorkersWithMaxCapacityCabinet()
+  private function getWorkersWithMaxCapacityCabinet()
   {
     $query = "SELECT w.*
     FROM worker AS w 
@@ -68,7 +69,7 @@ final class Employee
     return $query;
   }
   
-  public function getWorkersOnFloor($floor)
+  private function getWorkersOnFloor($floor)
   {
     $query = "SELECT w.*
     FROM worker AS w 
@@ -81,7 +82,7 @@ final class Employee
     return $query;
   }
   
-  public function getWorkersMaxSalaryOnFloor($floor)
+  private function getWorkersMaxSalaryOnFloor($floor)
   {
     $query = "SELECT w.*
     FROM worker AS w 
@@ -191,7 +192,6 @@ final class Employee
       $db->sendingQuery($query);
     }
   }
-  
   
   private function checkinUniqNumber($numCabinets, $totalOffices)
   {
