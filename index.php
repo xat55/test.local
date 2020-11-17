@@ -10,7 +10,10 @@ require "vendor/autoload.php";
 * 
 */
 class Employee
-{
+{  
+  // private $getDataWorkerAndCabinetTables;
+  private $data;
+  
   public function __construct()
   {
     // $this->create(); 
@@ -19,9 +22,28 @@ class Employee
   
   public function __get($property)
   {
-    // return $this->$property;
+    return $this->$property;
+    // return $this->property();
   }
   
+  public function getDataWorkerAndCabinetTables()
+  {
+    require "elems/init.php";
+    
+    $query = "SELECT w.id AS id, w.name, w.tel, w.salary, w.address,  c.num, c.floor, c.capacity
+                FROM worker AS w 
+              LEFT JOIN cabinet_worker AS a 
+                ON a.worker_id = w.id 
+              LEFT JOIN cabinet AS c
+                ON c.id = a.cabinet_id";
+    
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));  
+    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+    // print_r($this->getDataWorkerAndCabinetTables = $data);
+    
+    // print_r($this->getDataWorkerAndCabinetTables);
+    return $data;
+  }
   public function getWorkersOnFloor($floor)
   {
     require "elems/init.php";
@@ -36,7 +58,26 @@ class Employee
     
     $result = mysqli_query($link, $query) or die(mysqli_error($link));  
     for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
-    print_r($data);
+    // print_r($data);
+    return $data;
+  }
+  
+  public function getWorkersMaxSalaryOnFloor($floor)
+  {
+    require "elems/init.php";
+    
+    $query = "SELECT w.*
+                FROM worker AS w 
+              LEFT JOIN cabinet_worker AS a 
+                ON a.worker_id = w.id 
+              LEFT JOIN cabinet AS c
+                ON c.id = a.cabinet_id 
+              WHERE floor='$floor' AND salary =(SELECT MAX(salary) FROM worker)";
+    
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));  
+    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+    // print_r($data);
+    return $data;
   }
   
   private function create()
@@ -178,11 +219,35 @@ class Employee
     
     return $arrNums;
   }
+  
+  public function getWorkersWithMaxCapacityCabinet()
+  {
+    require "elems/init.php";
+    
+    $query = "SELECT w.*
+                FROM worker AS w 
+              LEFT JOIN cabinet_worker AS a 
+                ON a.worker_id = w.id 
+              LEFT JOIN cabinet AS c
+                ON c.id = a.cabinet_id 
+              WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
+    
+    $result = mysqli_query($link, $query) or die(mysqli_error($link));  
+    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+    // print_r($data);
+    return $data;
+  }
+  
 }
 $createTable = new Employee;
 // $createTable->create();
 // $createTable->fill();
-$createTable->getWorkersOnFloor(1);
+// $createTable->getWorkersOnFloor(10);
+// $createTable->getWorkersMaxSalaryOnFloor(1);
+// $createTable->getWorkersWithMaxCapacityCabinet();
+// $createTable->getDataWorkerAndCabinetTables();
+
+// $createTable->data;
 
 
 
