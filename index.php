@@ -4,14 +4,16 @@ ini_set('display_errors', 'on');
 
 // Подключение Faker (загружен через composer)
 require "vendor/autoload.php";
-// Подключение Faker
-// require __DIR__ . '/vendor/autoload.php';
+
+// Установление соединения с БД
+require "data_base.php";
+
 /**
 * 
 */
 class Employee
 {  
-  // private $getDataWorkerAndCabinetTables;
+  private $getDataWorkerAndCabinetTables;
   private $data;
   
   public function __construct()
@@ -22,39 +24,44 @@ class Employee
   
   public function __get($property)
   {
+    if ($property === 'dataWorkerAndCabinetTables') {
+      $this->getDataWorkerAndCabinetTables();
+    }
     return $this->$property;
     // return $this->property();
   }
   
   public function getDataWorkerAndCabinetTables()
   {
-    require "elems/init.php";
+    // require "elems/init.php";
+    // $link = new db();
     
     $query = "SELECT w.id AS id, w.name, w.tel, w.salary, w.address,  c.num, c.floor, c.capacity
-                FROM worker AS w 
-              LEFT JOIN cabinet_worker AS a 
-                ON a.worker_id = w.id 
-              LEFT JOIN cabinet AS c
-                ON c.id = a.cabinet_id";
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id";
     
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));  
-    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+    // $result = mysqli_query($link, $query) or die(mysqli_error($link));  
+    // for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+    // 
     // print_r($this->getDataWorkerAndCabinetTables = $data);
     
     // print_r($this->getDataWorkerAndCabinetTables);
-    return $data;
+    return $query;
   }
   public function getWorkersOnFloor($floor)
   {
     require "elems/init.php";
     
     $query = "SELECT w.*
-                FROM worker AS w 
-              LEFT JOIN cabinet_worker AS a 
-                ON a.worker_id = w.id 
-              LEFT JOIN cabinet AS c
-                ON c.id = a.cabinet_id 
-              WHERE floor='$floor'";
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id 
+    WHERE floor='$floor'";
     
     $result = mysqli_query($link, $query) or die(mysqli_error($link));  
     for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
@@ -67,12 +74,12 @@ class Employee
     require "elems/init.php";
     
     $query = "SELECT w.*
-                FROM worker AS w 
-              LEFT JOIN cabinet_worker AS a 
-                ON a.worker_id = w.id 
-              LEFT JOIN cabinet AS c
-                ON c.id = a.cabinet_id 
-              WHERE floor='$floor' AND salary =(SELECT MAX(salary) FROM worker)";
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id 
+    WHERE floor='$floor' AND salary =(SELECT MAX(salary) FROM worker)";
     
     $result = mysqli_query($link, $query) or die(mysqli_error($link));  
     for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
@@ -225,12 +232,12 @@ class Employee
     require "elems/init.php";
     
     $query = "SELECT w.*
-                FROM worker AS w 
-              LEFT JOIN cabinet_worker AS a 
-                ON a.worker_id = w.id 
-              LEFT JOIN cabinet AS c
-                ON c.id = a.cabinet_id 
-              WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id 
+    WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
     
     $result = mysqli_query($link, $query) or die(mysqli_error($link));  
     for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
@@ -238,16 +245,27 @@ class Employee
     return $data;
   }
   
+  public function makeDirectoriesWorkerTables()
+  {
+    mkdir('docs/folder');
+  }
 }
 $createTable = new Employee;
+$db = DataBase::getInstance();
 // $createTable->create();
 // $createTable->fill();
 // $createTable->getWorkersOnFloor(10);
 // $createTable->getWorkersMaxSalaryOnFloor(1);
 // $createTable->getWorkersWithMaxCapacityCabinet();
-// $createTable->getDataWorkerAndCabinetTables();
 
-// $createTable->data;
+// $createTable->getDataWorkerAndCabinetTables();
+// print_r($createTable->getDataWorkerAndCabinetTables());
+$query = $createTable->getDataWorkerAndCabinetTables();
+
+$res = $db->getData($query);
+print_r($res);
+// $createTable->makeDirectoriesWorkerTables();
+
 
 
 
