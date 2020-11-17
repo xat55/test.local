@@ -4,7 +4,7 @@ ini_set('display_errors', 'on');
 
 class DataBase {
   
-  public $db;
+  private $db;
   static private $_ins = NULL;
   
   static public function getInstance() {
@@ -12,22 +12,26 @@ class DataBase {
     if(self::$_ins instanceof self) {
       return self::$_ins;
     }
+    
     return self::$_ins = new self;
   }
   
   public function __construct() {
-    echo "<h1>Соединение с базой данных</h1>";
+    echo "<h4>Соединение с базой данных</h4>";
     $this->db = new mysqli('localhost','root','12345','test');
     
     if($this->db->connect_error) {
       throw new DbException("Ошибка соединения : ");
     }
-    
     $this->db->query("SET NAMES 'UTF8'");
   }
   
   private function __clone() {
     
+  }
+  
+  public function sendingQuery($query) {
+    return $this->db->query($query);
   }
   
   public function getData($query) {
@@ -36,7 +40,7 @@ class DataBase {
     for($i = 0; $i < $result->num_rows; $i++) {
       $row[] = $result->fetch_assoc();
     }
-  
+    
     return $row;
   }
 }

@@ -11,50 +11,65 @@ require "data_base.php";
 /**
 * 
 */
-class Employee
+final class Employee
 {  
-  private $getDataWorkerAndCabinetTables;
-  private $data;
+  // private $getDataWorkerAndCabinetTables;
+  public $param = null;
   
   public function __construct()
   {
     // $this->create(); 
-    // $this->fill(); 
+    $this->fill(); 
   }
   
   public function __get($property)
   {
     if ($property === 'dataWorkerAndCabinetTables') {
-      $this->getDataWorkerAndCabinetTables();
+      return $this->getDataWorkerAndCabinetTables();
     }
+    
+    if ($property === 'workersWithMaxCapacityCabinet') {
+      return $this->getWorkersWithMaxCapacityCabinet();
+    }
+    
+    if ($property === 'workersOnFloor') {
+      return $this->getWorkersOnFloor($this->param);
+    }
+    
+    if ($property === 'workersMaxSalaryOnFloor') {
+      return $this->getWorkersMaxSalaryOnFloor($this->param);
+    }
+    
     return $this->$property;
-    // return $this->property();
   }
   
   public function getDataWorkerAndCabinetTables()
   {
-    // require "elems/init.php";
-    // $link = new db();
-    
     $query = "SELECT w.id AS id, w.name, w.tel, w.salary, w.address,  c.num, c.floor, c.capacity
     FROM worker AS w 
     LEFT JOIN cabinet_worker AS a 
     ON a.worker_id = w.id 
     LEFT JOIN cabinet AS c
     ON c.id = a.cabinet_id";
-    
-    // $result = mysqli_query($link, $query) or die(mysqli_error($link));  
-    // for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
-    // 
-    // print_r($this->getDataWorkerAndCabinetTables = $data);
-    
-    // print_r($this->getDataWorkerAndCabinetTables);
+
     return $query;
   }
+  
+  public function getWorkersWithMaxCapacityCabinet()
+  {
+    $query = "SELECT w.*
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id 
+    WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
+    
+    return $query;
+  }
+  
   public function getWorkersOnFloor($floor)
   {
-    require "elems/init.php";
-    
     $query = "SELECT w.*
     FROM worker AS w 
     LEFT JOIN cabinet_worker AS a 
@@ -63,16 +78,11 @@ class Employee
     ON c.id = a.cabinet_id 
     WHERE floor='$floor'";
     
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));  
-    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
-    // print_r($data);
-    return $data;
+    return $query;
   }
   
   public function getWorkersMaxSalaryOnFloor($floor)
   {
-    require "elems/init.php";
-    
     $query = "SELECT w.*
     FROM worker AS w 
     LEFT JOIN cabinet_worker AS a 
@@ -81,16 +91,11 @@ class Employee
     ON c.id = a.cabinet_id 
     WHERE floor='$floor' AND salary =(SELECT MAX(salary) FROM worker)";
     
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));  
-    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
-    // print_r($data);
-    return $data;
+    return $query;
   }
   
   private function create()
   {
-    require "elems/init.php";
-    
     $query = "CREATE TABLE worker (
       id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(30),
@@ -100,8 +105,7 @@ class Employee
       vkId VARCHAR(100),
       photo VARCHAR(30)
     )";
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));
-    var_dump($result);
+    DataBase::getInstance()->sendingQuery($query);
     
     $query = "CREATE TABLE cabinet (
       id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -109,28 +113,19 @@ class Employee
       floor INT(6),
       capacity INT(6)
     )";
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));
-    var_dump($result);
-    
+    DataBase::getInstance()->sendingQuery($query);
+
     $query = "CREATE TABLE cabinet_worker (
-      id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      
+      id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,  
       worker_id INT(6) UNSIGNED,
-      
-      
       cabinet_id INT(6) UNSIGNED
-      
     )";
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));
-    var_dump($result);
-    // FOREIGN KEY (worker_id) REFERENCES cabinet(id),
-    // FOREIGN KEY (cabinet_id) REFERENCES worker(id)
+    DataBase::getInstance()->sendingQuery($query);
   }
   
   private function fill($numberOfEmployees = 10, $numCabinets = 7, $totalOffices = 20)
   {
-    require "elems/init.php";
-    
+    $db = DataBase::getInstance();
     // Если нужна русская локализация, передать её параметром в метод create
     $faker = Faker\Factory::create('ru_RU');     
     
@@ -147,13 +142,11 @@ class Employee
       VALUES 
       ('$firstName', '$tel', '$address', '$salary', '$vkId', '')";
       
-      $result = mysqli_query($link, $query) or die(mysqli_error($link));
-      var_dump($result);
+      $db->sendingQuery($query);
     }
     // ----------------------
     
     $arrCabinets = $this->checkinUniqNumber($numCabinets, $totalOffices);
-    // print_r($arrCabinets);
     
     for ($i = 0; $i < $numCabinets; $i ++) {
       $num = $arrCabinets[$i];
@@ -165,10 +158,8 @@ class Employee
       VALUES 
       ('$num', '$floor', '$capacity')";  
       
-      $result = mysqli_query($link, $query) or die(mysqli_error($link));
-      var_dump($result);
+      $db->sendingQuery($query);
     }
-    
     // -----------------------------------------------
     // Определим максимальную вместимость кабинета
     // $query = "SELECT MIN(capacity) AS minCapacity FROM cabinet";
@@ -177,10 +168,10 @@ class Employee
     // $minCapacity = $capacity[0]['minCapacity'];
     
     $query = "SELECT id, capacity FROM cabinet";
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));  
-    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
+    $data = $db->getData($query);
     
     $cabinetArr = [];
+    
     foreach ($data as $value) {
       $value['id'];
       $value['capacity'];
@@ -188,10 +179,8 @@ class Employee
         $cabinetArr[] = $value['id'];
       }
     }
-    
     $query = "SELECT id FROM worker";
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));
-    for ($workers = []; $row = mysqli_fetch_assoc($result); $workers[] = $row);
+    $workers = $db->getData($query);
     
     // Заполняем таблицу 'cabinet_worker'
     for ($i = 0; $i < $numberOfEmployees; $i ++) { 
@@ -199,7 +188,7 @@ class Employee
       $cabinet_id = $cabinetArr[$i];
       
       $query = "INSERT INTO cabinet_worker (worker_id, cabinet_id) VALUES ('$worker_id', '$cabinet_id')";      
-      $result = mysqli_query($link, $query) or die(mysqli_error($link));
+      $db->sendingQuery($query);
     }
   }
   
@@ -227,31 +216,13 @@ class Employee
     return $arrNums;
   }
   
-  public function getWorkersWithMaxCapacityCabinet()
-  {
-    require "elems/init.php";
-    
-    $query = "SELECT w.*
-    FROM worker AS w 
-    LEFT JOIN cabinet_worker AS a 
-    ON a.worker_id = w.id 
-    LEFT JOIN cabinet AS c
-    ON c.id = a.cabinet_id 
-    WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
-    
-    $result = mysqli_query($link, $query) or die(mysqli_error($link));  
-    for ($data = []; $row = mysqli_fetch_assoc($result); $data[] = $row);
-    // print_r($data);
-    return $data;
-  }
-  
   public function makeDirectoriesWorkerTables()
   {
     mkdir('docs/folder');
   }
 }
 $createTable = new Employee;
-$db = DataBase::getInstance();
+// $db = DataBase::getInstance();
 // $createTable->create();
 // $createTable->fill();
 // $createTable->getWorkersOnFloor(10);
@@ -260,10 +231,16 @@ $db = DataBase::getInstance();
 
 // $createTable->getDataWorkerAndCabinetTables();
 // print_r($createTable->getDataWorkerAndCabinetTables());
-$query = $createTable->getDataWorkerAndCabinetTables();
+// $query = $createTable->getDataWorkerAndCabinetTables();
+// $query = $createTable->dataWorkerAndCabinetTables;
 
-$res = $db->getData($query);
-print_r($res);
+// $createTable->param = 1;
+// $query = $createTable->workersOnFloor;
+
+// print_r($query);
+
+// $res = $db->getData($query);
+// print_r($res);
 // $createTable->makeDirectoriesWorkerTables();
 
 
