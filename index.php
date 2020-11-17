@@ -127,11 +127,12 @@ final class Employee
   private function fill($numberOfEmployees = 10, $numCabinets = 7, $totalOffices = 20)
   {
     $db = DataBase::getInstance();
-    // Если нужна русская локализация, передать её параметром в метод create
-    $faker = Faker\Factory::create('ru_RU');     
+    // Если нужна русская локализация, передать её параметром в метод create 'ru_RU'
+    $faker = Faker\Factory::create();     
     
     for ($i = 0; $i < $numberOfEmployees; $i ++) {      
-      $firstName = $faker->firstName;
+      // $firstName = $faker->firstName;
+      $firstName = $faker->userName;
       $tel = $faker->e164PhoneNumber;
       $address = $faker->streetAddress;
       $salary = $faker->numberBetween($min = 100, $max = 1000);
@@ -153,12 +154,12 @@ final class Employee
       $num = $arrCabinets[$i];
       $floor = mt_rand(1, 10);
       $capacity = mt_rand(4, 7);
-      
+    
       $query = "INSERT INTO cabinet 
       (num, floor, capacity) 
       VALUES 
       ('$num', '$floor', '$capacity')";  
-      
+    
       $db->sendingQuery($query);
     }
     // -----------------------------------------------
@@ -187,7 +188,7 @@ final class Employee
     for ($i = 0; $i < $numberOfEmployees; $i ++) { 
       $worker_id = $workers[$i]['id'];
       $cabinet_id = $cabinetArr[$i];
-      
+    
       $query = "INSERT INTO cabinet_worker (worker_id, cabinet_id) VALUES ('$worker_id', '$cabinet_id')";      
       $db->sendingQuery($query);
     }
@@ -218,38 +219,51 @@ final class Employee
   
   public function makeDirectoriesWorkerTables()
   {
-    mkdir('docs/folder');
+    $db = DataBase::getInstance();
+    $query = "SELECT id FROM worker";
+    $data = $db->getData($query);
+    
+    foreach ($data as $key => $value) {
+      $worker_id = $value['id'];
+      mkdir("docs/worker.$worker_id");
+    }
+    // foreach ($data[0] as $fieldName => $value) {
+    // }
+      // mkdir("docs/worker.1");
+  }
+  
+  public function getNames()
+  {
+    // $db = DataBase::getInstance();
+    // $query = "SELECT name FROM worker ORDER BY name";
+    // $data = $db->getData($query);
+    // print_r($data);
+    // 
+    // foreach ($data as $key => $value) {
+    //   $worker_name = $value['name'].'.txt';
+    //   // echo "$worker_name <br>";
+    //   file_put_contents("docs/worker.name/$worker_name", '');
+    //   // mkdir("docs/worker.name/$fileName");
+    // }
+    
+    $files = array_diff(scandir('docs/worker.name'), ['.', '..']);
+    print_r($files);
+    // // preg_match('#^[a-zA-z0-9]+/.txt$#', $fileName);
+    // 
+    foreach ($files as $key => $fileName) {
+    
+      if (preg_match('#[a-z]+[0-9]+\.txt#', $fileName)) {
+        echo "$fileName <br>";
+      }
+    }
+    
+    
   }
 }
-$createTable = new Employee;
+
+$employee = new Employee;
+$employee->getNames();
+
 // $db = DataBase::getInstance();
-// $createTable->create();
-// $createTable->fill();
-// $createTable->getWorkersOnFloor(10);
-// $createTable->getWorkersMaxSalaryOnFloor(1);
-// $createTable->getWorkersWithMaxCapacityCabinet();
-
-// $createTable->getDataWorkerAndCabinetTables();
-// print_r($createTable->getDataWorkerAndCabinetTables());
-// $query = $createTable->getDataWorkerAndCabinetTables();
-// $query = $createTable->dataWorkerAndCabinetTables;
-
-// $createTable->param = 1;
-// $query = $createTable->workersOnFloor;
-
-// print_r($query);
-
-// $res = $db->getData($query);
-// print_r($res);
-// $createTable->makeDirectoriesWorkerTables();
 
 
-
-
-// $faker = Faker\Factory::create('ru_RU'); // Если нужен русская локализация, передать её параметром в метод create
-// echo $faker->firstName;
-// echo '<br>';
-// echo $faker->streetAddress;
-// echo $faker->uuid;
-// echo '<br>';
-// echo $faker->text;
