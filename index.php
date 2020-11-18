@@ -3,7 +3,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 'on');
 
 // Подключение Faker (загружен через composer)
-require "vendor/autoload.php";
+require_once "vendor/autoload.php";
 
 // Установление соединения с БД
 require "data_base.php";
@@ -136,7 +136,8 @@ final class Employee
       $tel = $faker->e164PhoneNumber;
       $address = $faker->streetAddress;
       $salary = $faker->numberBetween($min = 100, $max = 1000);
-      $vkId = $faker->uuid;
+      // $vkId = $faker->uuid;
+      $vkId = 'id'.$faker->numberBetween($min = 10000000, $max = 99999999);
       $tel = $faker->e164PhoneNumber;
       
       $query = "INSERT INTO worker 
@@ -227,12 +228,9 @@ final class Employee
       $worker_id = $value['id'];
       mkdir("docs/worker.$worker_id");
     }
-    // foreach ($data[0] as $fieldName => $value) {
-    // }
-      // mkdir("docs/worker.1");
   }
   
-  public function getNames()
+  public function getNames($id)
   {
     // $db = DataBase::getInstance();
     // $query = "SELECT name FROM worker ORDER BY name";
@@ -245,14 +243,12 @@ final class Employee
     //   file_put_contents("docs/worker.name/$worker_name", '');
     //   // mkdir("docs/worker.name/$fileName");
     // }
-    
-    $files = array_diff(scandir('docs/worker.name'), ['.', '..']);
-    print_r($files);
-    // // preg_match('#^[a-zA-z0-9]+/.txt$#', $fileName);
-    // 
+    $path = "docs/worker.$id";
+    $files = array_diff(scandir($path), ['.', '..']);
+
     foreach ($files as $key => $fileName) {
     
-      if (preg_match('#[a-z]+[0-9]+\.txt#', $fileName)) {
+      if (preg_match('#[a-z][0-9]\.txt#', $fileName)) {
         echo "$fileName <br>";
       }
     }
@@ -262,7 +258,7 @@ final class Employee
 }
 
 $employee = new Employee;
-$employee->getNames();
+$employee->getNames(1);
 
 // $db = DataBase::getInstance();
 
