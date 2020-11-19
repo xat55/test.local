@@ -1,11 +1,9 @@
 <pre><?php
-error_reporting(E_ALL);
-ini_set('display_errors', 'on');
 
 // Подключение Faker (загружен через composer)
 require_once "vendor/autoload.php";
 
-// Установление соединения с БД
+// Подключение файла для однократного установление соединения с БД
 require "data_base.php";
 
 /**
@@ -17,12 +15,14 @@ final class Employee
   
   public function __construct()
   {
-    // $this->create(); 
-    // $this->fill(); 
+    $this->create(); 
+    $this->fill(); 
   }
   
-  // Магический метод, обрабатывающий обращения к несуществующим свойствам объекта класса
-  // и вызывающий на исполнение приватные методы класса
+  /**
+   * Магический метод, обрабатывающий обращения к несуществующим свойствам объекта класса
+   * и вызывающий на исполнение приватные методы класса
+   */
   public function __get($property)
   {
     if ($property === 'dataWorkerAndCabinetTables') {
@@ -41,6 +41,10 @@ final class Employee
       return $this->getWorkersMaxSalaryOnFloor($this->param);
     }
     
+    if ($property === 'namesFromWorkerDir') {
+      return $this->getNamesFromWorkerDir($this->param);
+    }
+    
     if ($property === 'directoriesWorkerTable') {
       return $this->makeDirectoriesWorkerTable();
     }
@@ -52,57 +56,9 @@ final class Employee
     return $this->$property;
   }
   
-  private function getDataWorkerAndCabinetTables()
-  {
-    $query = "SELECT w.id AS id, w.name, w.tel, w.salary, w.address,  c.num, c.floor, c.capacity
-    FROM worker AS w 
-    LEFT JOIN cabinet_worker AS a 
-    ON a.worker_id = w.id 
-    LEFT JOIN cabinet AS c
-    ON c.id = a.cabinet_id";
-    
-    return $query;
-  }
-  
-  private function getWorkersWithMaxCapacityCabinet()
-  {
-    $query = "SELECT w.*
-    FROM worker AS w 
-    LEFT JOIN cabinet_worker AS a 
-    ON a.worker_id = w.id 
-    LEFT JOIN cabinet AS c
-    ON c.id = a.cabinet_id 
-    WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
-    
-    return $query;
-  }
-  
-  private function getWorkersOnFloor($floor)
-  {
-    $query = "SELECT w.*
-    FROM worker AS w 
-    LEFT JOIN cabinet_worker AS a 
-    ON a.worker_id = w.id 
-    LEFT JOIN cabinet AS c
-    ON c.id = a.cabinet_id 
-    WHERE floor='$floor'";
-    
-    return $query;
-  }
-  
-  private function getWorkersMaxSalaryOnFloor($floor)
-  {
-    $query = "SELECT w.*
-    FROM worker AS w 
-    LEFT JOIN cabinet_worker AS a 
-    ON a.worker_id = w.id 
-    LEFT JOIN cabinet AS c
-    ON c.id = a.cabinet_id 
-    WHERE floor='$floor' AND salary =(SELECT MAX(salary) FROM worker)";
-    
-    return $query;
-  }
-  
+  /**
+   * Метод реализует создание таблиц worker, cabinet, cabinet_worker
+   */
   private function create()
   {
     $query = "CREATE TABLE worker (
@@ -132,19 +88,22 @@ final class Employee
     DataBase::getInstance()->sendingQuery($query);
   }
   
+  /**
+   * Метод заполняет таблицы 'worker', 'cabinet', 'cabinet_worker' данными
+   */
   private function fill($numberOfEmployees = 10, $numCabinets = 7, $totalOffices = 20)
   {
     $db = DataBase::getInstance();
+    
     // Если нужна русская локализация, передать её параметром в метод create 'ru_RU'
     $faker = Faker\Factory::create();     
     
-    for ($i = 0; $i < $numberOfEmployees; $i ++) {      
-      // $firstName = $faker->firstName;
+    // Заполняем таблицу 'worker'
+    for ($i = 0; $i < $numberOfEmployees; $i ++) {    
       $firstName = $faker->userName;
       $tel = $faker->e164PhoneNumber;
       $address = $faker->streetAddress;
       $salary = $faker->numberBetween($min = 100, $max = 1000);
-      // $vkId = $faker->uuid;
       $vkId = 'id'.$faker->numberBetween($min = 10000000, $max = 99999999);
       $tel = $faker->e164PhoneNumber;
       
@@ -155,8 +114,8 @@ final class Employee
       
       $db->sendingQuery($query);
     }
-    // ----------------------
     
+    // Заполняем таблицу 'cabinet'
     $arrCabinets = $this->checkinUniqNumber($numCabinets, $totalOffices);
     
     for ($i = 0; $i < $numCabinets; $i ++) {
@@ -171,12 +130,6 @@ final class Employee
       
       $db->sendingQuery($query);
     }
-    // -----------------------------------------------
-    // Определим максимальную вместимость кабинета
-    // $query = "SELECT MIN(capacity) AS minCapacity FROM cabinet";
-    // $result = mysqli_query($link, $query) or die(mysqli_error($link));  
-    // for ($capacity = []; $row = mysqli_fetch_assoc($result); $capacity[] = $row); 
-    // $minCapacity = $capacity[0]['minCapacity'];
     
     $query = "SELECT id, capacity FROM cabinet";
     $data = $db->getData($query);
@@ -203,14 +156,86 @@ final class Employee
     }
   }
   
-  // Функция создает массив неповторяющихся чисел
+  /**
+   * Метод получает все данные из таблиц 'worker', 'cabinet'
+   */
+  private function getDataWorkerAndCabinetTables()
+  {
+    $db = DataBase::getInstance();
+    
+    $query = "SELECT w.id AS id, w.name, w.tel, w.salary, w.address,  c.num, c.floor, c.capacity
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id";
+    
+    return $db->getData($query);
+  }
+  
+  /**
+   * Метод получает всех работников из кабинета с максимальной вместительностью
+   */
+  private function getWorkersWithMaxCapacityCabinet()
+  {
+    $db = DataBase::getInstance();
+    
+    $query = "SELECT w.*
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id 
+    WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
+    
+    return $db->getData($query);
+  }
+  
+  /**
+   * Метод получает всех работников на заданном этаже
+   */
+  private function getWorkersOnFloor($floor)
+  {
+    $db = DataBase::getInstance();
+    
+    $query = "SELECT w.*
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id 
+    WHERE floor = '$floor'";
+    
+    return $db->getData($query);
+  }
+  
+ /**
+  * Метод получает
+  */
+  private function getWorkersMaxSalaryOnFloor($floor)
+  {
+    $db = DataBase::getInstance();
+    
+    $query = "SELECT w.*
+    FROM worker AS w 
+    LEFT JOIN cabinet_worker AS a 
+    ON a.worker_id = w.id 
+    LEFT JOIN cabinet AS c
+    ON c.id = a.cabinet_id 
+    WHERE floor='$floor' AND salary =(SELECT MAX(salary) FROM worker)";
+    
+    return $db->getData($query);
+  }
+  
+  /**
+   * Метод создает массив неповторяющихся чисел
+   */
   private function checkinUniqNumber($numCabinets, $totalOffices)
   {
     /*  Если число запрошенных кабинетов больше общего количества кабинетов  */
     if ($numCabinets > $totalOffices) {
       return false;
     } 
-    
     $arrNums = [];
     
     for ($i = 1; $i <= $numCabinets; $i ++) {
@@ -227,6 +252,9 @@ final class Employee
     return $arrNums;
   }
   
+  /**
+   * Метод создает на сервере папки вида 'worker_id'
+   */
   private function makeDirectoriesWorkerTable()
   {
     $db = DataBase::getInstance();
@@ -240,7 +268,8 @@ final class Employee
   }
   
   /**
-   * 
+   * Метод выбирает на сервере в папке 'worker.id' файлы и выводит их на экран
+   * по условию наличия хотя бы одной латинской буквы и одной цифры
    */
   private function getNamesFromWorkerDir($id)
   {
@@ -256,8 +285,8 @@ final class Employee
   }
   
   /**
-   * Метод, формирующий массив ссылок на пользователей Вконтакте, состоящих из 
-   * значений vkId, извлеченных из таблицы
+   * Метод формирует массив ссылок пользователей Вконтакте, состоящих из 
+   * значений vkId, извлеченных из таблицы 'worker'
    */
   private function getVkPaths()
   {
@@ -274,7 +303,9 @@ final class Employee
   }
   
   /**
-   * 
+   * Метод получает массив HTML страниц, полученных с помощью библиотеки CURL.
+   * Выбирает из каждого элемента массива ссылку на фото в профиле пользователя Вконтакте
+   * и отправляет ее в базу данных в поле 'photo'
    */
   private function getAndInsertFotoInDir()
   {
@@ -290,8 +321,8 @@ final class Employee
     }    
       
     /**
-     * Раскомментируйте, если хотите получить массив ссылок с помощью регулярки.
-     * Тогда, закоментируйте стр. 271, 236-280.
+     * Раскомментируйте код на стр. 324-331, если хотите получить массив ссылок с помощью регулярки.
+     * И закоментируйте код на стр. 271, 236-280.
      */
     // foreach ($dataCurlArr as $dataCurl) {
     //   $reg = '#<img\s+class="page_avatar_img"\s+src="(.+?)"#su';
@@ -305,21 +336,19 @@ final class Employee
       $query = "UPDATE worker SET photo='$link' WHERE id='$id'";
       $db->sendingQuery($query);
     }
-    
-    return true;
   }
   
   /**
-   * Метод, возвращающий массив HTML страниц, полученных с помощью библиотеки CURL
+   * Метод возвращает массив HTML страниц, полученных с помощью библиотеки CURL
    */
   private function getCurlData()
   {
     $workerVkIdArr = $this->getVkPaths();
     $dataCurlArr = [];
-    $curl = curl_init();
+    $curl = curl_init(); // Инициализируем сеанс
     
     foreach ($workerVkIdArr as $workerVkId) { 
-      curl_setopt($curl, CURLOPT_URL, $workerVkId);
+      curl_setopt($curl, CURLOPT_URL, $workerVkId); // Указываем адрес страницы
       curl_setopt($curl, CURLOPT_USERAGENT, "Mozilla/4.0 (Windows NT 6.1; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0");
       curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1); // Автоматом идём по редиректам
       curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0); // Не проверять SSL сертификат
@@ -334,10 +363,3 @@ final class Employee
     return $dataCurlArr;
   }  
 }
-
-// $employee = new Employee;
-// $employee->andInsertFotoInDir;
-
-// $db = DataBase::getInstance();
-
-

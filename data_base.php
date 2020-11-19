@@ -1,7 +1,9 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 'on');
 
+/**
+ * Класс DataBase (тип шаблона Singleton), который устанавливает соединение с базой данных
+ * и осуществляет реализацию на единственность создания его экземпляра.
+ */
 class DataBase {
   
   private $db;
@@ -16,7 +18,7 @@ class DataBase {
     return self::$_ins = new self;
   }
   
-  public function __construct() {
+  private function __construct() {
     echo "<h4>Соединение с базой данных</h4>";
     $this->db = new mysqli('localhost','root','12345','test');
     
@@ -40,6 +42,7 @@ class DataBase {
     for($i = 0; $i < $result->num_rows; $i++) {
       $row[] = $result->fetch_assoc();
     }
+    // print_r($row);
     
     return $row;
   }
