@@ -12,11 +12,13 @@ require "data_base.php";
 final class Employee
 {  
   public $param = null;
+  private $db;
   
   public function __construct()
   {
-    $this->create(); 
-    $this->fill(); 
+    // $this->create(); 
+    // $this->fill();
+    $this->db = DataBase::getInstance();
   }
   
   /**
@@ -70,7 +72,7 @@ final class Employee
       vkId VARCHAR(100),
       photo VARCHAR(30)
     )";
-    DataBase::getInstance()->sendingQuery($query);
+    $this->db->sendingQuery($query);
     
     $query = "CREATE TABLE cabinet (
       id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -78,14 +80,14 @@ final class Employee
       floor INT(6),
       capacity INT(6)
     )";
-    DataBase::getInstance()->sendingQuery($query);
+    $this->db->sendingQuery($query);
     
     $query = "CREATE TABLE cabinet_worker (
       id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,  
       worker_id INT(6) UNSIGNED,
       cabinet_id INT(6) UNSIGNED
     )";
-    DataBase::getInstance()->sendingQuery($query);
+    $this->db->sendingQuery($query);
   }
   
   /**
@@ -93,7 +95,7 @@ final class Employee
    */
   private function fill($numberOfEmployees = 10, $numCabinets = 7, $totalOffices = 20)
   {
-    $db = DataBase::getInstance();
+    $db = $this->db;
     
     // Если нужна русская локализация, передать её параметром в метод create 'ru_RU'
     $faker = Faker\Factory::create();     
@@ -168,7 +170,7 @@ final class Employee
     LEFT JOIN cabinet AS c
     ON c.id = a.cabinet_id";
     
-    return DataBase::getInstance()->getData($query);
+    return $this->db->getData($query);
   }
   
   /**
@@ -184,7 +186,7 @@ final class Employee
     ON c.id = a.cabinet_id 
     WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
     
-    return DataBase::getInstance()->getData($query);
+    return $this->db->getData($query);
   }
   
   /**
@@ -200,23 +202,24 @@ final class Employee
     ON c.id = a.cabinet_id 
     WHERE floor = '$floor'";
     
-    return DataBase::getInstance()->getData($query);
+    return $this->db->getData($query);
   }
   
  /**
-  * Метод получает
+  * Метод получает работника на этаже с максимальной зарплатой
   */
   private function getWorkersMaxSalaryOnFloor($floor)
   {  
+    // Запрос в разработке!!!
     $query = "SELECT w.*
-    FROM worker AS w 
+    FROM worker AS w  
     LEFT JOIN cabinet_worker AS a 
     ON a.worker_id = w.id 
     LEFT JOIN cabinet AS c
     ON c.id = a.cabinet_id 
-    WHERE floor='$floor' AND salary =(SELECT MAX(salary) FROM worker)";
+    WHERE salary = (SELECT MAX(salary) FROM worker) IN floor='$floor'";
     
-    return DataBase::getInstance()->getData($query);
+    return $this->db->getData($query);
   }
   
   /**
@@ -250,7 +253,7 @@ final class Employee
   private function makeDirectoriesWorkerTable()
   {
     $query = "SELECT id FROM worker";
-    $data = DataBase::getInstance()->getData($query);
+    $data = $this->db->getData($query);
     
     foreach ($data as $key => $value) {
       $worker_id = $value['id'];
@@ -282,7 +285,7 @@ final class Employee
   private function getVkPaths()
   {
     $query = "SELECT vkId FROM worker";
-    $data = DataBase::getInstance()->getData($query);
+    $data = $this->db->getData($query);
     $workerVkIdArr = [];
     
     foreach ($data as $value) {
@@ -319,7 +322,7 @@ final class Employee
     //   preg_match_all($reg, $dataCurl, $matches);
     //   $linksArr[] = $matches[1][0];
     // }  
-    $db = DataBase::getInstance();
+    $db = $this->db;
     
     foreach ($linksArr as $key => $link) {  
       $id = ++$key;
@@ -353,3 +356,7 @@ final class Employee
     return $dataCurlArr;
   }  
 }
+
+$employee = new Employee;
+$employee->param = 3;
+print_r($employee->workersMaxSalaryOnFloor);
