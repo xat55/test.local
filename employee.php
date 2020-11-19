@@ -161,8 +161,6 @@ final class Employee
    */
   private function getDataWorkerAndCabinetTables()
   {
-    $db = DataBase::getInstance();
-    
     $query = "SELECT w.id AS id, w.name, w.tel, w.salary, w.address,  c.num, c.floor, c.capacity
     FROM worker AS w 
     LEFT JOIN cabinet_worker AS a 
@@ -170,7 +168,7 @@ final class Employee
     LEFT JOIN cabinet AS c
     ON c.id = a.cabinet_id";
     
-    return $db->getData($query);
+    return DataBase::getInstance()->getData($query);
   }
   
   /**
@@ -178,8 +176,6 @@ final class Employee
    */
   private function getWorkersWithMaxCapacityCabinet()
   {
-    $db = DataBase::getInstance();
-    
     $query = "SELECT w.*
     FROM worker AS w 
     LEFT JOIN cabinet_worker AS a 
@@ -188,7 +184,7 @@ final class Employee
     ON c.id = a.cabinet_id 
     WHERE capacity = (SELECT MIN(capacity) FROM cabinet)";
     
-    return $db->getData($query);
+    return DataBase::getInstance()->getData($query);
   }
   
   /**
@@ -196,8 +192,6 @@ final class Employee
    */
   private function getWorkersOnFloor($floor)
   {
-    $db = DataBase::getInstance();
-    
     $query = "SELECT w.*
     FROM worker AS w 
     LEFT JOIN cabinet_worker AS a 
@@ -206,16 +200,14 @@ final class Employee
     ON c.id = a.cabinet_id 
     WHERE floor = '$floor'";
     
-    return $db->getData($query);
+    return DataBase::getInstance()->getData($query);
   }
   
  /**
   * Метод получает
   */
   private function getWorkersMaxSalaryOnFloor($floor)
-  {
-    $db = DataBase::getInstance();
-    
+  {  
     $query = "SELECT w.*
     FROM worker AS w 
     LEFT JOIN cabinet_worker AS a 
@@ -224,7 +216,7 @@ final class Employee
     ON c.id = a.cabinet_id 
     WHERE floor='$floor' AND salary =(SELECT MAX(salary) FROM worker)";
     
-    return $db->getData($query);
+    return DataBase::getInstance()->getData($query);
   }
   
   /**
@@ -257,9 +249,8 @@ final class Employee
    */
   private function makeDirectoriesWorkerTable()
   {
-    $db = DataBase::getInstance();
     $query = "SELECT id FROM worker";
-    $data = $db->getData($query);
+    $data = DataBase::getInstance()->getData($query);
     
     foreach ($data as $key => $value) {
       $worker_id = $value['id'];
@@ -290,9 +281,8 @@ final class Employee
    */
   private function getVkPaths()
   {
-    $db = DataBase::getInstance();
     $query = "SELECT vkId FROM worker";
-    $data = $db->getData($query);
+    $data = DataBase::getInstance()->getData($query);
     $workerVkIdArr = [];
     
     foreach ($data as $value) {
