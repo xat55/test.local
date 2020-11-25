@@ -3,7 +3,7 @@
 // Подключение Faker (загружен через composer)
 require_once "vendor/autoload.php";
 
-// Подключение файла для однократного установление соединения с БД
+// Подключение файла для однократного установления соединения с БД
 require "data_base.php";
 
 /**
@@ -16,9 +16,9 @@ final class Employee
   
   public function __construct()
   {
-    // $this->create(); 
-    // $this->fill();
     $this->db = DataBase::getInstance();
+    $this->create(); 
+    $this->fill();
   }
   
   /**
